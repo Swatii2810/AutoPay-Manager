@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AutoPay Manager – Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#3D5AFE', 'brand-light': '#6B8EFF', 'brand-bg': '#EEF1FF' },
+          fontFamily: { sans: ['Inter','Segoe UI','sans-serif'] },
+          keyframes: {
+            'fade-up':   { '0%':{ opacity:'0', transform:'translateY(20px)' }, '100%':{ opacity:'1', transform:'translateY(0)' } },
+            'shake':     { '0%,100%':{ transform:'translateX(0)' }, '25%':{ transform:'translateX(-8px)' }, '75%':{ transform:'translateX(8px)' } },
+            'bounce-in': { '0%':{ transform:'scale(0.5)', opacity:'0' }, '60%':{ transform:'scale(1.1)' }, '100%':{ transform:'scale(1)', opacity:'1' } },
+            'spin':      { '0%':{ transform:'rotate(0deg)' }, '100%':{ transform:'rotate(360deg)' } },
+            'progress':  { '0%':{ width:'0%' }, '100%':{ width:'100%' } },
+          },
+          animation: {
+            'fade-up':   'fade-up 0.4s ease-out both',
+            'shake':     'shake 0.4s ease-in-out',
+            'bounce-in': 'bounce-in 0.35s ease-out both',
+            'spin':      'spin 0.7s linear infinite',
+            'progress':  'progress 1.8s linear forwards',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* ── CSS Theme Tokens ── */
+    :root {
+      --bg-page:       #f4f7fe;
+      --bg-card:       #ffffff;
+      --bg-input:      #ffffff;
+      --bg-icon:       #EEF1FF;
+      --bg-hover:      #F9FAFB;
+      --bg-subtle:     #F8F9FF;
+      --text-primary:  #1A1A2E;
+      --text-secondary:#6B7280;
+      --text-muted:    #9CA3AF;
+      --border:        #E5E7EB;
+      --border-subtle: #F3F4F6;
+      --shadow-card:   0 2px 12px rgba(0,0,0,0.06);
+      --shadow-hover:  0 6px 20px rgba(0,0,0,0.10);
+      --sidebar-bg:    #1A1A2E;
+      --sidebar-text:  rgba(255,255,255,0.6);
+      --sidebar-hover: rgba(255,255,255,0.07);
+      --sidebar-border:rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] {
+      --bg-page:       #0F1117;
+      --bg-card:       #1C1F2E;
+      --bg-input:      #252836;
+      --bg-icon:       #252836;
+      --bg-hover:      #252836;
+      --bg-subtle:     #181B27;
+      --text-primary:  #F1F3F9;
+      --text-secondary:#9CA3AF;
+      --text-muted:    #6B7280;
+      --border:        #2E3347;
+      --border-subtle: #252836;
+      --shadow-card:   0 2px 12px rgba(0,0,0,0.3);
+      --shadow-hover:  0 6px 20px rgba(0,0,0,0.4);
+      --sidebar-bg:    #13151F;
+      --sidebar-text:  rgba(255,255,255,0.5);
+      --sidebar-hover: rgba(255,255,255,0.05);
+      --sidebar-border:rgba(255,255,255,0.06);
+    }
+
+    *{box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f8f9ff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background 0.3s}
+    .screen{display:none;width:100%;max-width:400px;flex-direction:column}
+    .screen.active{display:flex}
+    input[type=number]{-moz-appearance:textfield}
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .otp-box:focus{border-color:#3D5AFE;background:#EEF1FF;outline:none}
+    .input-wrap:focus-within{border-color:#3D5AFE}
+
+    /* ── Dashboard layout (homeScreen only) ── */
+    #homeScreen {
+      display: none;
+      position: fixed; inset: 0;
+      max-width: 100%; padding: 0;
+      flex-direction: row;
+      background: var(--bg-page);
+      transition: background 0.3s;
+    }
+    #homeScreen.active { display: flex; }
+
+    /* Sidebar */
+    #sidebar {
+      width: 250px; flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex; flex-direction: column;
+      padding: 0; overflow-y: auto;
+      transition: transform 0.3s ease, background 0.3s;
+      z-index: 100;
+    }
+    #sidebarOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 99;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+    .sidebar-nav { padding: 16px 12px; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 10px;
+      color: var(--sidebar-text); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.18s; margin-bottom: 4px;
+      border: none; background: none; width: 100%; text-align: left;
+      font-family: inherit;
+    }
+    .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+    .nav-item.active { background: #3D5AFE; color: #fff; font-weight: 600; }
+    .nav-item svg { flex-shrink: 0; }
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--sidebar-border);
+    }
+
+    /* Main content */
+    #dashMain {
+      flex: 1; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    #dashTopbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px 0; gap: 12px;
+    }
+    #dashContent { padding: 20px 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 16px; }
+    .stat-card {
+      flex: 1; background: var(--bg-card); border-radius: 14px;
+      padding: 18px 20px; box-shadow: var(--shadow-card);
+      display: flex; align-items: center; gap: 14px;
+      transition: box-shadow 0.2s, transform 0.2s, background 0.3s;
+    }
+    .stat-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+    .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--bg-icon); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    /* Two-column grid */
+    .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+
+    /* Panel cards */
+    .panel {
+      background: var(--bg-card); border-radius: 14px;
+      box-shadow: var(--shadow-card); overflow: hidden;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border-subtle);
+      transition: border-color 0.3s;
+    }
+    .panel-header h3 { color: var(--text-primary); font-size: 15px; font-weight: 700; margin: 0; transition: color 0.3s; }
+    .panel-body { padding: 0 20px; }
+
+    /* Hamburger (mobile) */
+    #hamburgerBtn {
+      display: none; width: 40px; height: 40px; background: var(--bg-icon);
+      border-radius: 10px; border: none; cursor: pointer;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    /* Tab panels */
+    .dash-tab { display: none; }
+    .dash-tab.active { display: block; }
+
+    /* Theme toggle switch */
+    .theme-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer;
+      color: var(--sidebar-text); font-size: 14px; font-weight: 500;
+      margin-bottom: 4px; transition: background 0.18s;
+      user-select: none;
+    }
+    .theme-toggle:hover { background: var(--sidebar-hover); color: #fff; }
+    .toggle-track {
+      width: 36px; height: 20px; border-radius: 50px;
+      background: rgba(255,255,255,0.15); position: relative;
+      transition: background 0.25s; flex-shrink: 0;
+    }
+    .toggle-track.on { background: #3D5AFE; }
+    .toggle-knob {
+      width: 14px; height: 14px; border-radius: 50%; background: #fff;
+      position: absolute; top: 3px; left: 3px;
+      transition: left 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .toggle-track.on .toggle-knob { left: 19px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .dash-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      #sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        transform: translateX(-100%);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #sidebarOverlay.open { display: block; }
+      #hamburgerBtn { display: flex; }
+      #dashTopbar { padding: 16px 16px 0; }
+      #dashContent { padding: 16px 16px 32px; }
+      .stats-row { flex-direction: column; }
+      #analyticsContent .charts-row { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SPLASH SCREEN ═══════════════ -->
+<div id="splashScreen" class="screen active items-center justify-center text-center"
+     style="position:fixed;inset:0;max-width:100%;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);z-index:50;flex-direction:column">
+  <div id="splashLogo" style="opacity:0;animation:bounce-in 0.6s ease-out 0.2s both">
+    <div style="width:88px;height:88px;background:rgba(255,255,255,0.2);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,0.15)">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4M14 15h2"/>
+      </svg>
+    </div>
+    <h1 style="color:white;font-size:26px;font-weight:700;margin-bottom:8px">AutoPay Manager</h1>
+    <p style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:400;animation:fade-up 0.4s ease-in 0.5s both;opacity:0">Smart Payments. Zero Hassle.</p>
+  </div>
+  <div style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);width:160px;height:4px;background:rgba(255,255,255,0.25);border-radius:99px;overflow:hidden">
+    <div style="height:100%;background:white;border-radius:99px;animation:progress 1.8s linear forwards"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="loginScreen" class="screen animate-fade-up">
+  <div class="text-center mb-8">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(61,90,254,0.3)">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4M14 15h2"/>
+      </svg>
+    </div>
+    <h1 style="font-size:22px;font-weight:700;color:#1A1A2E">AutoPay Manager</h1>
+    <p style="font-size:13px;color:#6B7280;margin-top:4px">Smart Payments. Zero Hassle.</p>
+  </div>
+
+  <div style="background:white;border-radius:20px;padding:24px;box-shadow:0 2px 24px rgba(0,0,0,0.08)">
+    <h2 style="font-size:17px;font-weight:600;color:#1A1A2E;margin-bottom:4px">Enter Mobile Number</h2>
+    <p style="font-size:13px;color:#6B7280;margin-bottom:20px">We'll send a 6-digit OTP to verify</p>
+
+    <div id="mobileInputWrap" class="input-wrap" style="display:flex;align-items:center;border:2px solid #E5E7EB;border-radius:14px;overflow:hidden;transition:border-color 0.2s">
+      <span style="padding:14px 16px;font-size:14px;font-weight:600;color:#374151;background:#F9FAFB;border-right:1px solid #E5E7EB;white-space:nowrap;user-select:none">+91</span>
+      <input id="mobileInput" type="number" inputmode="numeric" placeholder="Enter 10-digit number"
+        style="flex:1;padding:14px 12px;font-size:14px;color:#1A1A2E;border:none;outline:none;background:white;font-family:inherit"
+        oninput="onMobileInput(this)"/>
+      <div id="mobileLoader" style="display:none;padding-right:14px">
+        <div style="width:18px;height:18px;border:2px solid #3D5AFE;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+      </div>
+    </div>
+
+    <p id="mobileError" style="display:none;font-size:12px;color:#EF4444;margin-top:8px;margin-left:4px"></p>
+
+    <button id="sendOtpBtn" onclick="triggerSendOtp()" disabled
+      style="width:100%;margin-top:16px;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);color:white;font-size:14px;font-weight:700;cursor:not-allowed;opacity:0.4;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;box-shadow:0 4px 16px rgba(61,90,254,0.3)">
+      Send OTP
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+  <p style="text-align:center;font-size:11px;color:#9CA3AF;margin-top:20px">By continuing, you agree to our Terms &amp; Privacy Policy</p>
+</div>
+
+<!-- ═══════════════ OTP SCREEN ═══════════════ -->
+<div id="otpScreen" class="screen">
+  <div class="text-center mb-8">
+    <div style="width:64px;height:64px;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(61,90,254,0.3)">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h1 style="font-size:22px;font-weight:700;color:#1A1A2E">Verify OTP</h1>
+    <p id="otpSubtitle" style="font-size:13px;color:#6B7280;margin-top:4px">OTP sent to +91 XXXXXXXXXX</p>
+  </div>
+
+  <div style="background:white;border-radius:20px;padding:24px;box-shadow:0 2px 24px rgba(0,0,0,0.08)">
+    <div id="otpBoxes" style="display:flex;gap:10px;justify-content:center;margin-bottom:4px"></div>
+    <p id="otpError" style="display:none;font-size:12px;color:#EF4444;margin-top:12px;text-align:center"></p>
+
+    <button id="verifyBtn" onclick="triggerVerifyOtp()" disabled
+      style="width:100%;margin-top:20px;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);color:white;font-size:14px;font-weight:700;cursor:not-allowed;opacity:0.4;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;box-shadow:0 4px 16px rgba(61,90,254,0.3)">
+      <span id="verifyBtnText">Verify OTP</span>
+      <div id="verifyLoader" style="display:none;width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite"></div>
+    </button>
+
+    <div style="text-align:center;margin-top:20px">
+      <span style="font-size:13px;color:#6B7280">Didn't receive OTP? </span>
+      <button id="resendBtn" onclick="resendOtp()" disabled
+        style="font-size:13px;font-weight:600;color:#3D5AFE;background:none;border:none;cursor:not-allowed;opacity:0.4;font-family:inherit">
+        Resend OTP
+      </button>
+      <p id="resendTimer" style="font-size:11px;color:#9CA3AF;margin-top:4px">Resend in <span id="timerCount">30</span>s</p>
+    </div>
+  </div>
+
+  <button onclick="goBack()" style="margin-top:16px;text-align:center;font-size:13px;font-weight:500;color:#3D5AFE;background:none;border:none;cursor:pointer;font-family:inherit;width:100%">
+    ← Change Number
+  </button>
+</div>
+
+<!-- ═══════════════ HOME SCREEN (Dashboard) ═══════════════ -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div id="homeScreen" class="screen">
+
+  <!-- ── Sidebar ── -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4M14 15h2"/></svg>
+        </div>
+        <div>
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0;line-height:1.2">AutoPay</p>
+          <p style="color:rgba(255,255,255,0.5);font-size:11px;margin:0">Manager</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" id="nav-history" onclick="switchTab('history')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button class="nav-item" id="nav-analytics" onclick="switchTab('analytics')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </button>
+      <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <span id="themeLabel">Dark Mode</span>
+        </div>
+        <div class="toggle-track" id="themeTrack">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+      <button class="nav-item" onclick="logout()" style="color:rgba(239,68,68,0.8)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <div id="dashMain">
+
+    <!-- Topbar -->
+    <div id="dashTopbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button id="hamburgerBtn" onclick="openSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <h2 id="dashTabTitle" style="font-size:18px;font-weight:700;color:var(--text-primary);margin:0;transition:color 0.3s">Dashboard</h2>
+          <p id="welcomeMsg" style="font-size:12px;color:var(--text-secondary);margin:2px 0 0;transition:color 0.3s">Welcome back</p>
+        </div>
+      </div>
+      <!-- Balance card (compact, top-right) -->
+      <div style="background:linear-gradient(135deg,#3D5AFE,#6B8EFF);border-radius:14px;padding:12px 18px;color:white;box-shadow:0 4px 16px rgba(61,90,254,0.3);flex-shrink:0;display:flex;align-items:center;gap:14px">
+        <div style="text-align:right">
+          <p style="font-size:10px;font-weight:600;opacity:0.8;margin:0 0 2px">Balance</p>
+          <p id="balanceDisplay" style="font-size:20px;font-weight:700;margin:0">₹0.00</p>
+        </div>
+        <button onclick="openTopUpModal()" title="Add Funds"
+          style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.5);color:white;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;font-family:inherit"
+          onmouseenter="this.style.background='rgba(255,255,255,0.35)'" onmouseleave="this.style.background='rgba(255,255,255,0.2)'">+</button>
+      </div>
+    </div>
+
+    <!-- Tab content -->
+    <div id="dashContent">
+
+      <!-- ══ DASHBOARD TAB ══ -->
+      <div id="tab-dashboard" class="dash-tab active">
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:0 0 2px">Monthly Spend</p>
+              <p id="statMonthlySpend" style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0">₹0.00</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+            <div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:0 0 2px">Active Subscriptions</p>
+              <p id="statActiveSubs" style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0">0</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+            <div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:0 0 2px">Total Sent</p>
+              <p id="sentDisplay" style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0">₹0.00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buffer alert slot -->
+        <div id="homeContentArea" style="display:flex;flex-direction:column;gap:0"></div>
+
+        <!-- Two-column grid -->
+        <div class="dash-grid">
+          <!-- Left: transactions + autopay -->
+          <div id="dashLeft" style="display:flex;flex-direction:column;gap:16px"></div>
+          <!-- Right: recent activity -->
+          <div id="dashRight" style="display:flex;flex-direction:column;gap:16px">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Recent Activity</h3>
+              </div>
+              <div class="panel-body" id="recentActivityList" style="padding:8px 20px 16px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ HISTORY TAB ══ -->
+      <div id="tab-history" class="dash-tab">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Payment History</h3>
+            <span id="historyCount" style="font-size:12px;color:#6B7280;font-weight:500"></span>
+          </div>
+          <div class="panel-body" id="historyList" style="padding:0 20px 16px"></div>
+        </div>
+      </div>
+
+      <!-- ══ ANALYTICS TAB ══ -->
+      <div id="tab-analytics" class="dash-tab">
+        <div id="analyticsContent"></div>
+      </div>
+
+      <!-- ══ SETTINGS TAB ══ -->
+      <div id="tab-settings" class="dash-tab">
+        <div class="panel" id="settingsContent">
+          <div class="panel-header"><h3>Settings</h3></div>
+          <div class="panel-body" style="padding:8px 20px 20px">
+            <div style="padding:14px 0;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;gap:12px">
+              <div style="width:36px;height:36px;background:#EEF1FF;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <p style="font-size:13px;font-weight:600;color:#1A1A2E;margin:0 0 2px">Account</p>
+                <p id="settingsMobile" style="font-size:12px;color:#6B7280;margin:0"></p>
+              </div>
+            </div>
+            <div style="padding:14px 0;border-bottom:1px solid #F3F4F6">
+              <p style="font-size:13px;font-weight:600;color:#1A1A2E;margin:0 0 10px">Set Balance (₹)</p>
+              <div style="display:flex;gap:8px;max-width:320px">
+                <input id="balanceInput" type="number" min="0" step="0.01" placeholder="e.g. 5000"
+                  style="flex:1;padding:10px 14px;border:2px solid #E5E7EB;border-radius:10px;font-size:13px;color:#1A1A2E;outline:none;font-family:inherit;transition:border-color 0.2s"
+                  onfocus="this.style.borderColor='#3D5AFE'" onblur="this.style.borderColor='#E5E7EB'"/>
+                <button onclick="saveBalanceFromInput()" style="padding:10px 18px;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Save</button>
+              </div>
+            </div>
+            <div style="padding:14px 0">
+              <button onclick="logout()" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;font-family:inherit;padding:0">
+                <div style="width:36px;height:36px;background:#FEF2F2;border-radius:10px;display:flex;align-items:center;justify-content:center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </div>
+                <span style="font-size:13px;font-weight:600;color:#EF4444">Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dashContent -->
+  </div><!-- /dashMain -->
+</div><!-- /homeScreen -->
+
+<!-- ═══════════════ TOP-UP MODAL ═══════════════ -->
+<div id="topUpOverlay" onclick="closeTopUpModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;padding:16px"></div>
+<div id="topUpModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-48%) scale(0.95);z-index:2001;background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 16px 48px rgba(0,0,0,0.18);transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),opacity 0.2s;opacity:0;font-family:Inter,Segoe UI,sans-serif">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;background:#EEF1FF;border-radius:12px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D5AFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div>
+        <h3 style="color:#1A1A2E;font-size:16px;font-weight:700;margin:0">Add Funds</h3>
+        <p style="color:#6B7280;font-size:12px;margin:0">Top up your balance</p>
+      </div>
+    </div>
+    <button onclick="closeTopUpModal()" style="width:32px;height:32px;background:#F3F4F6;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7280;font-size:18px;line-height:1;font-family:inherit">×</button>
+  </div>
+
+  <!-- Current balance -->
+  <div style="background:#F8F9FF;border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:13px;color:#6B7280;font-weight:500">Current Balance</span>
+    <span id="topUpCurrentBal" style="font-size:15px;font-weight:700;color:#1A1A2E">₹0.00</span>
+  </div>
+
+  <!-- Quick amounts -->
+  <p style="font-size:12px;font-weight:600;color:#6B7280;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.04em">Quick Add</p>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <button onclick="setTopUpAmount(500)"  class="quick-amt-btn">₹500</button>
+    <button onclick="setTopUpAmount(1000)" class="quick-amt-btn">₹1,000</button>
+    <button onclick="setTopUpAmount(2000)" class="quick-amt-btn">₹2,000</button>
+    <button onclick="setTopUpAmount(5000)" class="quick-amt-btn">₹5,000</button>
+  </div>
+
+  <!-- Custom amount input -->
+  <p style="font-size:12px;font-weight:600;color:#6B7280;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.04em">Or Enter Amount</p>
+  <div id="topUpInputWrap" style="display:flex;align-items:center;border:2px solid #E5E7EB;border-radius:12px;overflow:hidden;transition:border-color 0.2s;margin-bottom:8px">
+    <span style="padding:13px 14px;font-size:15px;font-weight:700;color:#3D5AFE;background:#F8F9FF;border-right:1px solid #E5E7EB;user-select:none">₹</span>
+    <input id="topUpInput" type="number" min="1" step="1" placeholder="Enter amount"
+      style="flex:1;padding:13px 12px;font-size:15px;color:#1A1A2E;border:none;outline:none;background:white;font-family:inherit"
+      oninput="document.getElementById('topUpInputWrap').style.borderColor='#3D5AFE'"
+      onblur="document.getElementById('topUpInputWrap').style.borderColor='#E5E7EB'"
+      onkeydown="if(event.key==='Enter') submitTopUp()"/>
+  </div>
+  <p id="topUpError" style="display:none;font-size:12px;color:#EF4444;margin:0 0 12px 4px"></p>
+
+  <!-- Submit -->
+  <button onclick="submitTopUp()" style="width:100%;margin-top:8px;padding:14px;border-radius:50px;border:none;background:linear-gradient(135deg,#3D5AFE,#6B8EFF);color:white;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(61,90,254,0.4);transition:opacity 0.15s;font-family:inherit"
+    onmouseenter="this.style.opacity='0.9'" onmouseleave="this.style.opacity='1'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Add Funds
+  </button>
+</div>
+
+<style>
+  .quick-amt-btn {
+    flex:1; padding:8px 4px; border:2px solid #E5E7EB; border-radius:8px;
+    background:#fff; color:#1A1A2E; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:all 0.15s;
+  }
+  .quick-amt-btn:hover, .quick-amt-btn.selected {
+    border-color:#3D5AFE; color:#3D5AFE; background:#EEF1FF;
+  }
+</style>
+
+<script src="auth.js"></script>
+</body>
+</html>

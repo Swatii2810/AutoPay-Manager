@@ -1,0 +1,8 @@
+# Copy this file to local.properties and fill in your values.
+# local.properties is gitignored — never commit real keys.
+
+# Android SDK path (set automatically by Android Studio)
+sdk.dir=/Users/yourname/Library/Android/sdk
+
+# 2factor.in API key for SMS OTP
+TWO_FACTOR_API_KEY=your_2factor_api_key_here
